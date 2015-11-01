@@ -1,0 +1,24 @@
+-Autenticazione e chiusura: √
+USER √
+PASS √
+SYST √
+FEAT √
+PWD √
+NOOP √
+QUIT  √
+-Navigazione:
+CWD (DA VERIFICARE)
+CDUP (DA VERIFICARE)
+-Contenuto directory:  (per implementare queste funzionalità occorre gestire la seconda connessione)
+PORT
+LIST
+-Gestione comunicazione passiva:
+PASV
+-Trasferimento dei dati in formato ascii:
+TYPE
+STRU
+MODE
+RETR
+-ALTRO:
+Gestire errore 501 sul numero di parametri √
+Gestire pending login √
