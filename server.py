@@ -139,7 +139,7 @@ class MyFtpServer:
 			return "530 Unexpected repy, login incorrect"
 		if (len(parameter) > 1):
 			return "501 error on parameter number"
-		futurePath = os.path.dirname(os.path.dirname(self.__currentPath))
+		futurePath = os.path.dirname(self.__currentPath)
 		if (futurePath == self.__userConnected[1]):
 			return "250 original path reached"
 		else:
