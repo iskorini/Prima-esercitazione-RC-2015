@@ -1,12 +1,13 @@
 import socket
 import os
+import threading
+
 class MyFtpServer:
 
 	def __init__ (self, userdata, port):
 		self.__userdata = userdata
 		self.__port = port
 		self.__userConnected = 'EMPTY'
-		self.__currentPath = ''
 		self.__pending_login = 0
 
 	def is_logged(self):
@@ -55,7 +56,6 @@ class MyFtpServer:
 			return "501 error on parameter number"
 		if parameter[1] in self.__userdata and self.__userConnected == 'EMPTY':
 			self.__userConnected = self.__userdata[parameter[1]]
-			self.__currentPath = self.__userConnected[1]
 			self.__pending_login = 1
 			return "331 Username okay" #CAMBIARE
 		elif self.__pending_login == 1:
@@ -71,17 +71,17 @@ class MyFtpServer:
 		if (self.__userConnected != 'EMPTY') and (self.__userConnected[0] == parameter[1]) and self.__pending_login == 1:
 			self.__pending_login = 0
 			try:
-				os.mkdir(self.__currentPath)
-				print "MKDIR: "+self.__currentPath
+				os.mkdir(self.__userConnected[1])
+				print "MKDIR: "+self.__userConnected[1]
 			except OSError as HORROR:
 				print "MKDIR: failed"
+			os.chdir(self.__userConnected[1])
 			return "230 User logged in, proceed. Logged out if appropriate."
 		elif (self.__pending_login == 0):
 			return "503 Use USER first"
 		else:
 			self.__pending_login = 0
 			self.__userConnected = 'EMPTY'
-			self.__currentPath = ''
 			return "530 Invalid username or password"
 
 	def feat(self, parameter):
@@ -95,7 +95,6 @@ class MyFtpServer:
 		if (len(parameter) > 1):
 			return "501 error on parameter number"
 		self.__userConnected = 'EMPTY'
-		self.__currentPath = ''
 		return "221 bye bye"
 
 	def syst(self, parameter):
@@ -111,7 +110,7 @@ class MyFtpServer:
 		if self.__pending_login == 1:
 			return "530 Unexpected reply, login incorrect"
 		elif (self.is_logged()):
-			return self.__currentPath
+			return "257 current directory is: "+os.getcwd()
 		else:
 			return "530 Please log in with USER and PASS"
 
@@ -125,26 +124,24 @@ class MyFtpServer:
 	def CWD(self, parameter):
 		if self.__pending_login == 1:
 			return "530 Unexpected repy, login incorrect"
-		if (len(parameter) > 2):
+		if (len(parameter) != 2):
 			return "501 error on parameter number"
-		futurePath = self.__currentPath+parameter[1]
-		if (os.path.exists(futurePath)):
-			self.__currentPath = futurePath
-			return "250 OK, new path is: "+self.__currentPath
-		else:
-			return "550 "+ futurePath +  "doesn't exist"
+		try:
+			os.chdir(parameter[1])
+			return "250 OK, new path is: " + os.getcwd()
+		except:
+			return "550 "+ parameter[1] +  " doesn't exist"
 
 	def CDUP(self, parameter):
 		if self.__pending_login == 1:
 			return "530 Unexpected repy, login incorrect"
 		if (len(parameter) > 1):
 			return "501 error on parameter number"
-		futurePath = os.path.dirname(self.__currentPath)
-		if (futurePath == self.__userConnected[1]):
+		if (os.getcwd() == self.__userConnected[1]):
 			return "250 original path reached"
 		else:
-			self.__currentPath = futurePath
-			return "257 " + self.__currentPath + " is new path"
+			os.chdir(os.path.dirname(os.getcwd()))
+			return "257 " + os.getcwd() + " is new path"
 
 	functionality = {
 		'USER': user,
