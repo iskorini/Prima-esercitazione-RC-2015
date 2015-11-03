@@ -12,6 +12,7 @@ class MyFtpServer:
 		self.__data_conn = ''
 		self.__ready_to_send = 0
 		self.__address = ''
+		self.__active_connection = 0
 
 	def is_logged(self):
 		return (self.__userConnected != 'EMPTY' and self.__pending_login == 0)
@@ -23,18 +24,16 @@ class MyFtpServer:
 		print "SERVER STARTED AT PORT "+str(self.__port) #DEBUG
 		while 1:
 			s, self.__address = listen_socket.accept()
+			self.__active_connection = 1
 			print "connection incoming by " +  ', '.join(map(str, self.__address)) #DEBUG
 			s.sendall("220"+'\r\n')
-			last_reply = self.handle_request(s)
-			s.sendall(last_reply+'\r\n')
+			self.handle_request(s)
 			s.close()
 
 	def handle_request(self, sock):
-		while 1:
+		while self.__active_connection == 1:
 			request = self.receive_request(sock)
 			print "received message: "+request #DEBUG
-			if request == 'QUIT\r\n':
-				return self.quit()
 			reply = self.analize_request(request)
 			sock.sendall(reply+'\r\n')
 
@@ -94,10 +93,11 @@ class MyFtpServer:
 			return "530 Unexpected reply, login incorrect"
 		return "211 CRLF" #EVBB
 
-	def quit(self): #modificare nel caso di upload o download
+	def quit(self, parameter): #modificare nel caso di upload o download
 		if (len(parameter) > 1):
 			return "501 error on parameter number"
 		self.__userConnected = 'EMPTY'
+		self.__active_connection = 0
 		return "221 bye bye"
 
 	def syst(self, parameter):
