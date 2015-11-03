@@ -1,7 +1,7 @@
 import socket
 import os
 import threading
-
+import random
 class MyFtpServer:
 
 	def __init__ (self, userdata, port):
@@ -9,6 +9,9 @@ class MyFtpServer:
 		self.__port = port
 		self.__userConnected = 'EMPTY'
 		self.__pending_login = 0
+		self.__data_conn = ''
+		self.__ready_to_send = 0
+		self.__address = ''
 
 	def is_logged(self):
 		return (self.__userConnected != 'EMPTY' and self.__pending_login == 0)
@@ -19,8 +22,8 @@ class MyFtpServer:
 		listen_socket.listen(1)
 		print "SERVER STARTED AT PORT "+str(self.__port) #DEBUG
 		while 1:
-			s, address = listen_socket.accept()
-			print "connection incoming by " +  ', '.join(map(str, address)) #DEBUG
+			s, self.__address = listen_socket.accept()
+			print "connection incoming by " +  ', '.join(map(str, self.__address)) #DEBUG
 			s.sendall("220"+'\r\n')
 			last_reply = self.handle_request(s)
 			s.sendall(last_reply+'\r\n')
@@ -134,7 +137,7 @@ class MyFtpServer:
 
 	def CDUP(self, parameter):
 		if self.__pending_login == 1:
-			return "530 Unexpected repy, login incorrect"
+			return "530 Unexpected reply, login incorrect"
 		if (len(parameter) > 1):
 			return "501 error on parameter number"
 		if (os.getcwd() == self.__userConnected[1]):
@@ -142,6 +145,41 @@ class MyFtpServer:
 		else:
 			os.chdir(os.path.dirname(os.getcwd()))
 			return "257 " + os.getcwd() + " is new path"
+
+	def port(self, parameter):
+		if (self.is_logged() == 0):
+			return "530 Please log in with USER and PASS"
+		if (self.__pending_login == 1):
+			return "530 Unexpected reply, login incorrect"
+		if (len(parameter)!=7):
+			return "501 error on parameter number"
+		new_parameter = map(lambda x: x.replace(",", ""), parameter)
+		ip_address = []
+		for i in range(1,5):
+			ip_address.append(new_parameter[i])
+		ip_address = reduce(lambda x, y: str(x)+"."+str(y), ip_address)
+		port = int(parameter[5])*256+int(parameter[6])*1 #bah
+		self.__data_conn = data_transfer(ip_address, port, 0)
+		self.__data_conn.start()
+		self.__ready_to_send = 1
+		return "200 success"
+
+	def pasv(self, parameter):
+		if (self.__pending_login == 1):
+			return "530 Unexpected reply, login incorrect"
+		if (len(parameter)!=1):
+			return "501 error on parameter number"
+		if (self.is_logged() == 0):
+			return "530 Please log in with USER and PASS"
+		port = random.randrange(1000, 65536)
+		x = port/256 #BAH
+		y = port-(x*256)
+		self.__data_conn = data_transfer(self.__address[0], port ,1)
+		self.__data_conn.start()
+		self.__ready_to_send = 1
+		print "PASSIVE MODE ON PORT: "+str(port)
+		return "227 entering in passive mode ("+self.__address[0].replace(".",",")+","+str(x)+","+str(y)+")"
+
 
 	functionality = {
 		'USER': user,
@@ -152,8 +190,32 @@ class MyFtpServer:
 		'QUIT': quit,
 		'PWD': PWD,
 		'CWD': CWD,
-		'CDUP': CDUP
+		'CDUP': CDUP,
+		'PORT': port,
+		'PASV': pasv
 	}
+
+class data_transfer(threading.Thread): #classe per trasferimenti dati
+	def __init__(self, address, port, pasv):
+		threading.Thread.__init__(self)
+		self.__ap = (address, port)
+		self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.__pasv = pasv
+
+	def run(self):
+		if (self.__pasv == 1): #Sono in PASV
+			self.__sock.bind(self.__ap)
+			self.__sock.listen(1)
+			self.__s, address = self.__sock.accept()
+			print "DATA CONNECTION IS ALIVE"
+		elif (self.__pasv == 0): #Sono in attivo
+			self.__sock.connect(self.__ap)
+			print "DATA CONNECTION IS ALIVE"
+
+	def send_data(self, data):
+		self.__s.sendall(data)
+		self.__s.close()
+
 
 
 if __name__ == '__main__':
