@@ -10,10 +10,10 @@ QUIT  √
 CWD (DA VERIFICARE)
 CDUP (DA VERIFICARE)
 -Contenuto directory:  (per implementare queste funzionalità occorre gestire la seconda connessione)
-PORT
+PORT √
 LIST
 -Gestione comunicazione passiva:
-PASV
+PASV √
 -Trasferimento dei dati in formato ascii:
 TYPE
 STRU
