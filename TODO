@@ -11,7 +11,7 @@ CWD (DA VERIFICARE)
 CDUP (DA VERIFICARE)
 -Contenuto directory:  (per implementare queste funzionalità occorre gestire la seconda connessione)
 PORT √
-LIST
+LIST √ [GESTIRE ERRORI]
 -Gestione comunicazione passiva:
 PASV √
 -Trasferimento dei dati in formato ascii:
@@ -19,6 +19,9 @@ TYPE
 STRU
 MODE
 RETR
+
+
 -ALTRO:
 Gestire errore 501 sul numero di parametri √
 Gestire pending login √
+Sistemare espressioni regolari
