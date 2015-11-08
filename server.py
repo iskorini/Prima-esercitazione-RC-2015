@@ -12,7 +12,7 @@ class MyFtpServer:
 	def __init__ (self, userdata, port):
 		self.__userdata = userdata
 		self.__port = port
-		self.__userConnected = 'EMPTY'
+		self.__userConnected = 'EMPTY' #Io forzerei una struttura dati, stringhe volatili sono sempre un problema
 		self.__pending_login = 0
 		self.__data_conn = ''
 		self.__ready_to_send = 0
@@ -25,6 +25,7 @@ class MyFtpServer:
 		self.__ip_address = ''
 
 	def is_logged(self):
+		#Se cambi la stringa sotto e ti dimentichi di questa? Per questo data structure
 		return (self.__userConnected != 'EMPTY' and self.__pending_login == 0)
 
 	def verify_string(self, parameter, regexp):
@@ -252,6 +253,8 @@ class data_transfer(threading.Thread): #classe per trasferimenti dati
 		threading.Thread.__init__(self)
 		self.__ap = (address, port)
 		self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Si puo' riusare l'address in questo modo non aspetto che l'os deallochi il kernel buffer
+        self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.__pasv = pasv
 		self.__semaphore = threading.Semaphore(0)
 		self.__s = ''
@@ -273,6 +276,8 @@ class data_transfer(threading.Thread): #classe per trasferimenti dati
 			self.__s.close()
 		else:
 			self.__sock.sendall(data)
+            #E la connessione non la chiudi? "Congedarsi con una stretta di mano asd"
+            self.__s.close()
 			self.__sock.close()
 
 
