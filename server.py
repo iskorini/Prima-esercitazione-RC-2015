@@ -202,7 +202,7 @@ class MyFtpServer:
 		else:
 		    ls_comand = 'ls'
 		data_to_transfer = (subprocess.check_output(ls_comand, shell = True))
-		if (self.__type = 'A'):
+		if (self.__type == 'A'):
 			data_to_transfer.replace('\n','\r\n')
 		data_conn.send_data(data_to_transfer)
 		data_conn.join() #TERMINO IL THREAD
@@ -253,13 +253,13 @@ class data_transfer(threading.Thread): #classe per trasferimenti dati
 		threading.Thread.__init__(self)
 		self.__ap = (address, port)
 		self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Si puo' riusare l'address in questo modo non aspetto che l'os deallochi il kernel buffer
-        self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.__pasv = pasv
+		self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.__semaphore = threading.Semaphore(0)
 		self.__s = ''
+		self.__pasv = pasv
 
 	def run(self):
+
 		if (self.__pasv == 1): #Sono in PASV
 			self.__sock.bind(self.__ap)
 			self.__sock.listen(1)
@@ -276,8 +276,7 @@ class data_transfer(threading.Thread): #classe per trasferimenti dati
 			self.__s.close()
 		else:
 			self.__sock.sendall(data)
-            #E la connessione non la chiudi? "Congedarsi con una stretta di mano asd"
-            self.__s.close()
+			self.__s.close()
 			self.__sock.close()
 
 
