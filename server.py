@@ -12,7 +12,7 @@ class MyFtpServer:
 	def __init__ (self, userdata, port):
 		self.__userdata = userdata
 		self.__port = port
-		self.__userConnected = 'EMPTY'
+		self.__userConnected = 'EMPTY' #Io forzerei una struttura dati, stringhe volatili sono sempre un problema
 		self.__pending_login = 0
 		self.__data_conn = ''
 		self.__ready_to_send = 0
@@ -25,6 +25,7 @@ class MyFtpServer:
 		self.__ip_address = ''
 
 	def is_logged(self):
+		#Se cambi la stringa sotto e ti dimentichi di questa? Per questo data structure
 		return (self.__userConnected != 'EMPTY' and self.__pending_login == 0)
 
 	def verify_string(self, parameter, regexp):
@@ -201,7 +202,7 @@ class MyFtpServer:
 		else:
 		    ls_comand = 'ls'
 		data_to_transfer = (subprocess.check_output(ls_comand, shell = True))
-		if (self.__type = 'A'):
+		if (self.__type == 'A'):
 			data_to_transfer.replace('\n','\r\n')
 		data_conn.send_data(data_to_transfer)
 		data_conn.join() #TERMINO IL THREAD
@@ -252,11 +253,13 @@ class data_transfer(threading.Thread): #classe per trasferimenti dati
 		threading.Thread.__init__(self)
 		self.__ap = (address, port)
 		self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.__pasv = pasv
+		self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.__semaphore = threading.Semaphore(0)
 		self.__s = ''
+		self.__pasv = pasv
 
 	def run(self):
+
 		if (self.__pasv == 1): #Sono in PASV
 			self.__sock.bind(self.__ap)
 			self.__sock.listen(1)
@@ -273,6 +276,7 @@ class data_transfer(threading.Thread): #classe per trasferimenti dati
 			self.__s.close()
 		else:
 			self.__sock.sendall(data)
+			self.__s.close()
 			self.__sock.close()
 
 
